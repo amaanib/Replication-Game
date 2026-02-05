@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from collections import defaultdict
 
+# Replication Dynamics Game - Latest Version
 st.set_page_config(page_title="Replication Dynamics Game", layout="wide")
 st.title("🎮 Replication Dynamics Game")
 
