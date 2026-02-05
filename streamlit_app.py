@@ -29,6 +29,8 @@ def simulate_replication_dynamics(num_periods=100):
     probabilities = np.ones(n_automatons) / n_automatons
     history = [probabilities.copy()]
     payoff_history = defaultdict(list)
+    strategy_history = []  # Track which strategy each automaton plays
+    payoff_matrices = []   # Store payoff matrix for each period
     
     for period in range(num_periods):
         payoffs = np.zeros(n_automatons)
@@ -36,6 +38,23 @@ def simulate_replication_dynamics(num_periods=100):
         for i, automaton_i in enumerate(automatons):
             for j, automaton_j in enumerate(automatons):
                 payoffs[i] += payoff_matrix[automaton_i][automaton_j] * probabilities[j]
+        
+        # Store current payoff matrix
+        payoff_matrix_period = pd.DataFrame(
+            payoffs.reshape(-1, 1),
+            index=automatons,
+            columns=[f"Period {period}"]
+        )
+        payoff_matrices.append(payoff_matrix_period)
+        
+        # Determine dominant strategy for each automaton (the one with highest payoff against current population)
+        period_strategies = {}
+        for i, automaton in enumerate(automatons):
+            # Find which opponent gives highest payoff
+            best_opponent_idx = np.argmax([payoff_matrix[automaton][opp] for opp in automatons])
+            period_strategies[automaton] = automatons[best_opponent_idx]
+        
+        strategy_history.append(period_strategies)
         
         for i, automaton in enumerate(automatons):
             payoff_history[automaton].append(payoffs[i])
@@ -50,7 +69,7 @@ def simulate_replication_dynamics(num_periods=100):
         probabilities = probabilities / np.sum(probabilities)
         history.append(probabilities.copy())
     
-    return np.array(history), payoff_history
+    return np.array(history), payoff_history, strategy_history, payoff_matrices
 
 # Sidebar
 with st.sidebar:
@@ -61,15 +80,19 @@ st.info("📊 8 Automatons | ⏱️ Starting: 1/8 each | 🔄 Payoff-based rewei
 
 if st.button("🎮 Run Simulation", use_container_width=True):
     with st.spinner("Running simulation..."):
-        history, payoff_history = simulate_replication_dynamics(num_periods)
+        history, payoff_history, strategy_history, payoff_matrices = simulate_replication_dynamics(num_periods)
     
     st.session_state.history = history
     st.session_state.payoff_history = payoff_history
+    st.session_state.strategy_history = strategy_history
+    st.session_state.payoff_matrices = payoff_matrices
     st.session_state.done = True
 
 if "done" in st.session_state and st.session_state.done:
     history = st.session_state.history
     payoff_history = st.session_state.payoff_history
+    strategy_history = st.session_state.strategy_history
+    payoff_matrices = st.session_state.payoff_matrices
     final_probs = history[-1]
     
     st.header("Results")
@@ -139,3 +162,51 @@ if "done" in st.session_state and st.session_state.done:
         height=400
     )
     st.plotly_chart(fig_payoff, use_container_width=True)
+    
+    st.divider()
+    st.subheader("📊 Detailed Period Analysis")
+    
+    # Allow user to select which periods to view
+    periods_to_view = st.slider("Select periods to display", 0, num_periods - 1, (0, min(10, num_periods - 1)))
+    
+    # Display payoff matrix and strategies for selected periods
+    for period in range(periods_to_view[0], periods_to_view[1] + 1):
+        st.markdown(f"### Period {period}")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Payoffs Earned**")
+            period_payoffs = pd.DataFrame({
+                "Automaton": automatons,
+                "Payoff": [payoff_history[auto][period] for auto in automatons]
+            }).sort_values("Payoff", ascending=False)
+            st.dataframe(period_payoffs, use_container_width=True, hide_index=True)
+        
+        with col2:
+            st.markdown("**Best Response Strategy**")
+            period_strategies = strategy_history[period]
+            strategy_df = pd.DataFrame({
+                "Automaton": list(period_strategies.keys()),
+                "Plays Best Against": list(period_strategies.values())
+            })
+            st.dataframe(strategy_df, use_container_width=True, hide_index=True)
+    
+    st.divider()
+    st.subheader("📈 Full Payoff Matrix Timeline")
+    
+    # Create combined payoff matrix for all periods
+    combined_payoff_df = pd.concat(payoff_matrices, axis=1)
+    st.dataframe(combined_payoff_df, use_container_width=True)
+    
+    st.divider()
+    st.subheader("🎯 Strategy Selection by Period")
+    
+    # Create strategy timeline
+    strategy_timeline_data = {period: strategy_history[period] for period in range(len(strategy_history))}
+    strategy_timeline_df = pd.DataFrame(strategy_timeline_data).T
+    strategy_timeline_df.index.name = "Period"
+    
+    st.dataframe(strategy_timeline_df, use_container_width=True)
+
+st.markdown("[🔗 View on Streamlit Sharing](https://github.com/amaanib/Replication-Game)")
