@@ -39,11 +39,11 @@ def simulate_replication_dynamics(num_periods=100):
             for j, automaton_j in enumerate(automatons):
                 payoffs[i] += payoff_matrix[automaton_i][automaton_j] * probabilities[j]
         
-        # Store current payoff matrix
+        # Store current payoff matrix with period starting from t=0
         payoff_matrix_period = pd.DataFrame(
             payoffs.reshape(-1, 1),
             index=automatons,
-            columns=[f"Period {period}"]
+            columns=[f"t={period}"]
         )
         payoff_matrices.append(payoff_matrix_period)
         
@@ -122,12 +122,12 @@ if "done" in st.session_state and st.session_state.done:
     st.subheader("Evolution Over Time")
     
     evolution_df = pd.DataFrame(history, columns=automatons)
-    evolution_df['Period'] = range(len(history))
+    evolution_df['t'] = range(len(history))
     
     fig_evolution = go.Figure()
     for automaton in automatons:
         fig_evolution.add_trace(go.Scatter(
-            x=evolution_df['Period'],
+            x=evolution_df['t'],
             y=evolution_df[automaton],
             mode='lines',
             name=automaton,
@@ -136,7 +136,7 @@ if "done" in st.session_state and st.session_state.done:
     
     fig_evolution.update_layout(
         title="Probability Evolution (Stacked)",
-        xaxis_title="Period",
+        xaxis_title="Time Period (t)",
         yaxis_title="Probability",
         height=400
     )
@@ -144,12 +144,12 @@ if "done" in st.session_state and st.session_state.done:
     
     st.subheader("Payoffs Over Time")
     payoff_df = pd.DataFrame(payoff_history)
-    payoff_df['Period'] = range(len(payoff_df))
+    payoff_df['t'] = range(len(payoff_df))
     
     fig_payoff = go.Figure()
     for automaton in automatons:
         fig_payoff.add_trace(go.Scatter(
-            x=payoff_df['Period'],
+            x=payoff_df['t'],
             y=payoff_df[automaton],
             mode='lines',
             name=automaton
@@ -157,7 +157,7 @@ if "done" in st.session_state and st.session_state.done:
     
     fig_payoff.update_layout(
         title="Average Payoffs",
-        xaxis_title="Period",
+        xaxis_title="Time Period (t)",
         yaxis_title="Payoff",
         height=400
     )
@@ -171,7 +171,7 @@ if "done" in st.session_state and st.session_state.done:
     
     # Display payoff matrix and strategies for selected periods
     for period in range(periods_to_view[0], periods_to_view[1] + 1):
-        st.markdown(f"### Period {period}")
+        st.markdown(f"### t = {period}")
         
         col1, col2 = st.columns(2)
         
@@ -203,9 +203,9 @@ if "done" in st.session_state and st.session_state.done:
     st.subheader("🎯 Strategy Selection by Period")
     
     # Create strategy timeline
-    strategy_timeline_data = {period: strategy_history[period] for period in range(len(strategy_history))}
+    strategy_timeline_data = {f"t={period}": strategy_history[period] for period in range(len(strategy_history))}
     strategy_timeline_df = pd.DataFrame(strategy_timeline_data).T
-    strategy_timeline_df.index.name = "Period"
+    strategy_timeline_df.index.name = "Time"
     
     st.dataframe(strategy_timeline_df, use_container_width=True)
 
