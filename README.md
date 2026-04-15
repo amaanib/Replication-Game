@@ -37,14 +37,14 @@ The 8 strategies competing in the game:
 
 ## Features
 
-- 🎯 **Interactive Simulation**: Adjust simulation periods (10-200)
-- 📊 **Real-time Visualization**: Interactive charts showing strategy evolution
-- 📈 **Multiple Views**:
+- **Interactive Simulation**: Adjust simulation periods (10-200)
+- **Real-time Visualization**: Interactive charts showing strategy evolution
+- **Multiple Views**:
   - Final distribution pie chart
   - Stacked area chart showing probability evolution
   - Line chart tracking payoff changes
-- 📋 **Summary Statistics**: Dominant strategies, concentration metrics
-- ⚡ **Fast Computation**: Instant results even for 200 periods
+- **Summary Statistics**: Dominant strategies, concentration metrics
+- **Fast Computation**: Instant results even for 200 periods
 
 ## Installation (Local)
 
